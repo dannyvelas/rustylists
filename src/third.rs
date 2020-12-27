@@ -1,4 +1,4 @@
-use std::rc::Arc;
+use std::sync::Arc;
 
 pub struct List<T> {
     head: Link<T>,
@@ -18,7 +18,7 @@ impl<T> List<T> {
 
     pub fn append(&self, elem: T) -> List <T> {
         List {
-            head: Some(Rc::new(Node {
+            head: Some(Arc::new(Node {
                 elem: elem,
                 next: self.head.clone(),
             }))
@@ -27,13 +27,6 @@ impl<T> List<T> {
 
     pub fn tail(&self) -> List<T> {
         List { head: self.head.as_ref().and_then(|node| node.next.clone()) }
-    }
-
-    pub fn pop(&mut self) -> Option<T> {
-        self.head.take().map(|node| {
-            self.head = node.next;
-            node.elem
-        })
     }
 
     pub fn head(&self) -> Option<&T> {
@@ -49,7 +42,7 @@ impl<T> Drop for List<T> {
     fn drop(&mut self) {
         let mut head = self.head.take();
         while let Some(node) = head {
-            if let Ok(mut mode) = Rc::try_unwrap(node) {
+            if let Ok(mut node) = Arc::try_unwrap(node) {
                 head = node.next.take();
             } else {
                 break;
